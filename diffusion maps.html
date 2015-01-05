@@ -1777,16 +1777,26 @@ In&nbsp;[20]:
     <span class="n">eigval</span><span class="p">,</span> <span class="n">eigvec</span> <span class="o">=</span> <span class="n">LA</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">eigvec</span><span class="p">)):</span>
         <span class="n">phi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eigvec</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
-    <span class="c">#reverse order</span>
+    <span class="c"># reverse order</span>
     <span class="n">eigval</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">eigval</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">phi</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">phi</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="c"># compute dimension </span>
+    <span class="c">#(for better performance you may want to combine this with an iterative way of computing eigenvalues/vectors)</span>
+    <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;dim&#39;</span><span class="p">]:</span>
+        <span class="n">embeddim</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;dim&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;delta&#39;</span><span class="p">]:</span>
+        <span class="n">i</span><span class="o">=</span><span class="mi">1</span>
+        <span class="k">while</span> <span class="n">eigval</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="n">t</span><span class="o">&gt;</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;delta&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">eigval</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="n">t</span><span class="p">:</span>
+            <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="n">embeddim</span> <span class="o">=</span> <span class="n">i</span>
     
     <span class="c"># compute embedding coordinates</span>
     <span class="n">Psi</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X</span><span class="p">:</span>
         <span class="n">Psi</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;dim&#39;</span><span class="p">]):</span>
-            <span class="n">i</span><span class="o">=</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span> <span class="c">#ignore the first eigenvector/value as this is only constant</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">embeddim</span><span class="p">):</span>
+            <span class="n">i</span><span class="o">=</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span> <span class="c"># ignore the first eigenvector/value as this is only constant</span>
             <span class="n">Psi</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">eigval</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="n">t</span><span class="p">)</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">x</span><span class="p">]</span><span class="o">/</span><span class="n">v</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">Psi</span><span class="p">,</span> <span class="n">dataList</span><span class="p">)</span>
 </pre></div>
@@ -1799,11 +1809,11 @@ In&nbsp;[20]:
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">
-In&nbsp;[27]:
+In&nbsp;[35]:
 </div>
 <div class="inner_cell">
     <div class="input_area">
-<div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">getImgData</span><span class="p">(</span><span class="s">&quot;_img/&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+<div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">getImgData</span><span class="p">(</span><span class="s">&quot;img/&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -1814,7 +1824,7 @@ In&nbsp;[27]:
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">
-In&nbsp;[25]:
+In&nbsp;[34]:
 </div>
 <div class="inner_cell">
     <div class="input_area">

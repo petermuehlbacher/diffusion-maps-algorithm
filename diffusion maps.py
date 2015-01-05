@@ -87,26 +87,36 @@ def diffusionMapping(data, k, t, **kwargs):
     eigval, eigvec = LA.eigh(np.array(a))
     for i in range(len(eigvec)):
         phi.append(eigvec[:, i])
-    #reverse order
+    # reverse order
     eigval[:] = eigval[::-1]
     phi[:] = phi[::-1]
+    
+    # compute dimension 
+    #(for better performance you may want to combine this with an iterative way of computing eigenvalues/vectors)
+    if kwargs['dim']:
+        embeddim = kwargs['dim']
+    elif kwargs['delta']:
+        i=1
+        while eigval[i]**t>kwargs['delta']*eigval[1]**t:
+            i+=1
+        embeddim = i
     
     # compute embedding coordinates
     Psi = []
     for x in X:
         Psi.append([])
-        for j in range(kwargs['dim']):
-            i=j+1 #ignore the first eigenvector/value as this is only constant
+        for j in range(embeddim):
+            i=j+1 # ignore the first eigenvector/value as this is only constant
             Psi[x].append((eigval[i]**t)*phi[i][x]/v[x])
     return (Psi, dataList)
 
 
-# In[27]:
+# In[35]:
 
-data = getImgData("_img/", False)
+data = getImgData("img/", False)
 
 
-# In[25]:
+# In[34]:
 
 coordinates, dataList = diffusionMapping(data, lambda x,y: math.exp(-LA.norm(x-y)/1024), 1,dim=2)
 a = np.asarray(coordinates)
