@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[19]:
+# In[2]:
 
 get_ipython().magic(u'matplotlib inline')
 import numpy as np
@@ -9,6 +9,7 @@ from numpy import linalg as LA
 from PIL import Image
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import os, math
 
 newDim = 64
@@ -51,7 +52,7 @@ def getImgData(path, preview=True):
     return data
 
 
-# In[20]:
+# In[3]:
 
 def diffusionMapping(data, k, t, **kwargs):
     try:
@@ -111,25 +112,45 @@ def diffusionMapping(data, k, t, **kwargs):
     return (Psi, dataList)
 
 
-# In[35]:
+# In[4]:
 
-data = getImgData("img/", False)
+data = getImgData("__img/", False)
 
 
-# In[34]:
+# In[32]:
+
+showImages=False
 
 coordinates, dataList = diffusionMapping(data, lambda x,y: math.exp(-LA.norm(x-y)/1024), 1,dim=2)
 a = np.asarray(coordinates)
 x = a[:,0]
 y = a[:,1]
-plt.plot(x, y, 'ro')
-labels = ['image {0}'.format(i+1) for i in range(len(x))]
-for label, xpt, ypt in zip(labels, x, y):
-    plt.annotate(
-        label,
-        xy = (xpt, ypt), xytext = (-20, 20),
-        textcoords = 'offset points', ha = 'right', va = 'bottom',
-        bbox = dict(boxstyle = 'round,pad=0.5', fc = 'white', alpha = 0.5),
-        arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
+fig, ax = plt.subplots()
+
+j=0
+
+if showImages:
+    squareLength = math.sqrt(len(dataList[0]))
+    square = (squareLength,squareLength)
+    for xpt, ypt in zip(x, y):
+        img = np.array(dataList[j]).reshape(square)[::2, ::2]
+        ab = AnnotationBbox(OffsetImage(img, cmap = cm.Greys_r), [xpt, ypt],
+            xybox=(65., 0),
+            xycoords='data',
+            boxcoords="offset points",
+            frameon=False,
+            arrowprops=dict(arrowstyle="->"))
+        ax.add_artist(ab)
+        j=j+1
+else:
+    labels = ['image {0}'.format(i+1) for i in range(len(x))]
+    for label, xpt, ypt in zip(labels, x, y):
+        plt.annotate(
+            label,
+            xy = (xpt, ypt), xytext = (-20, 20),
+            textcoords = 'offset points', ha = 'right', va = 'bottom',
+            bbox = dict(boxstyle = 'round,pad=0.5', fc = 'white', alpha = 0.5),
+            arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
+ax.plot(x, y, 'ro')
 plt.show()
 
